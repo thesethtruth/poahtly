@@ -11,9 +11,11 @@
 </head>
 
 <style>
-    html, body {
-    height: 100%;
-}
+    html,
+    body {
+        height: 100%;
+    }
+
     html {
         display: table;
         margin: auto 10%;
@@ -26,8 +28,8 @@
 </style>
 
 <body>
-    <div id="header" style="text-align: center;">
-        <h1 id="title">loading...</h1>
+    <div id="header" style="text-align: left;">
+        <h1 id="title" style="text-align: center;">loading...</h1>
         <p id="description" style="max-width: 60%; margin-left: 20%;">loading...</p>
         <!-- div with author on left and date on right -->
         <div id="author-date"
@@ -35,54 +37,65 @@
             <p id="author">loading...</p>
             <p id="date">loading...</p>
         </div>
+    </div>
         <div id="plot-area" class="plotly-container">
-        </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.19.0/plotly.min.js"
             integrity="sha512-rDTMDUczYoqXqy8vpSHz8iBAIpc50f1uyIt95d6524XTZQHiH7Vq2SixVdv2v0ae6zyyYUty9XlrbjbpXutAZg=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script>
             const queryString = window.location.search;
-            const urlParams = new URLSearchParams(queryString);
-
-            const P = "https://s3.akhenaten.eu"
-            var bucket = urlParams.get('bucket');
-            var slug = urlParams.get('slug');
-
-            // check if json in slug
-            if (slug.endsWith(".json")) {
-                var url = P + "/" + bucket + "/" + slug
+            if (queryString === "") {
+                alert("No bucket and slug provided. Please provide in the format of (?bucket=<bucket>&slug=<slug>)");
             } else {
-                var url = P + "/" + bucket + "/" + slug + ".json"
-                meta = P + "/" + bucket + "/" + slug + ".meta.json"
+                const urlParams = new URLSearchParams(queryString);
+                const P = "https://s3.akhenaten.eu"
+                var bucket = urlParams.get('bucket');
+                var slug = urlParams.get('slug');
+
+                // check if json in slug
+                if (slug.endsWith(".json")) {
+                    var url = P + "/" + bucket + "/" + slug
+                    meta = P + "/" + bucket + "/" + slug.slice(0, -5) + ".meta.json"
+                } else {
+                    var url = P + "/" + bucket + "/" + slug + ".json"
+                    meta = P + "/" + bucket + "/" + slug + ".meta.json"
+                }
+
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(fig => {
+                        Plotly.newPlot("plot-area", fig.data, fig.layout, { responsive: true })
+                    })
+                    // later on make this a nice modal!
+                    .catch(error => {
+                        alert(""
+                            + "The following error occured:\n"
+                            + error + "\n\n "
+                            + "Error trying to fetch specified file on 's3.akhenaten.eu':\n"
+                            + "bucket: " + bucket + "\n"
+                            + "slug: " + slug
+                            + "\n\n"
+                            + "Have you provided the correct 'bucket' and 'slug' query parameters? (?bucket=<bucket>&slug=<slug>)\n"
+                        )
+                    });
+
+                fetch(meta)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("title").innerHTML = data.title
+                        document.getElementById("description").innerHTML = data.description
+                        document.getElementById("author").innerHTML = data.author
+                        document.getElementById("date").innerHTML = data.date
+                    })
+                    .catch(error => {
+                        document.getElementById("title").innerHTML = "not supplied"
+                        document.getElementById("description").innerHTML = "not supplied"
+                        document.getElementById("author").innerHTML = "not supplied"
+                        document.getElementById("date").innerHTML = "not supplied"
+                    });
             }
 
-
-            fetch(url)
-                .then(response => response.json())
-                .then(fig => {
-                    Plotly.newPlot("plot-area", fig.data, fig.layout, { responsive: true })
-                })
-                // later on make this a nice modal!
-                .catch(error => {
-                    alert(""
-                        + "The following error occured:\n"
-                        + error + "\n\n "
-                        + "Error trying to fetch specified file on 's3.akhenaten.eu':\n"
-                        + "bucket: " + bucket + "\n"
-                        + "slug: " + slug
-                        + "\n\n"
-                        + "Have you provided the correct 'bucket' and 'slug' query parameters? (?bucket=<bucket>&slug=<slug>)\n"
-                    )
-                });
-
-            fetch(meta)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("title").innerHTML = data.title
-                    document.getElementById("description").innerHTML = data.description
-                    document.getElementById("author").innerHTML = data.author
-                    document.getElementById("date").innerHTML = data.date
-                })
 
         </script>
 
