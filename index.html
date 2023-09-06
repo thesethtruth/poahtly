@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Plotly</title>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style id="plotly.js-style-global"></style>
+    <style id="plotly.js-style-modebar-a0c75e"></style>
+</head>
+
+<style>
+    html, body {
+    height: 100%;
+}
+    html {
+        display: table;
+        margin: auto 10%;
+    }
+
+    body {
+        display: table-cell;
+        vertical-align: middle;
+    }
+</style>
+
+<body>
+    <div id="header" style="text-align: center;">
+        <h1 id="title">loading...</h1>
+        <p id="description" style="max-width: 60%; margin-left: 20%;">loading...</p>
+        <!-- div with author on left and date on right -->
+        <div id="author-date"
+            style="display: flex; justify-content: space-between; padding-right: 2rem; padding-left: 2rem;">
+            <p id="author">loading...</p>
+            <p id="date">loading...</p>
+        </div>
+        <div id="plot-area" class="plotly-container">
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.19.0/plotly.min.js"
+            integrity="sha512-rDTMDUczYoqXqy8vpSHz8iBAIpc50f1uyIt95d6524XTZQHiH7Vq2SixVdv2v0ae6zyyYUty9XlrbjbpXutAZg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script>
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+
+            const P = "https://s3.akhenaten.eu"
+            var bucket = urlParams.get('bucket');
+            var slug = urlParams.get('slug');
+
+            // check if json in slug
+            if (slug.endsWith(".json")) {
+                var url = P + "/" + bucket + "/" + slug
+            } else {
+                var url = P + "/" + bucket + "/" + slug + ".json"
+                meta = P + "/" + bucket + "/" + slug + ".meta.json"
+            }
+
+
+            fetch(url)
+                .then(response => response.json())
+                .then(fig => {
+                    Plotly.newPlot("plot-area", fig.data, fig.layout, { responsive: true })
+                })
+                // later on make this a nice modal!
+                .catch(error => {
+                    alert(""
+                        + "The following error occured:\n"
+                        + error + "\n\n "
+                        + "Error trying to fetch specified file on 's3.akhenaten.eu':\n"
+                        + "bucket: " + bucket + "\n"
+                        + "slug: " + slug
+                        + "\n\n"
+                        + "Have you provided the correct 'bucket' and 'slug' query parameters? (?bucket=<bucket>&slug=<slug>)\n"
+                    )
+                });
+
+            fetch(meta)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("title").innerHTML = data.title
+                    document.getElementById("description").innerHTML = data.description
+                    document.getElementById("author").innerHTML = data.author
+                    document.getElementById("date").innerHTML = data.date
+                })
+
+        </script>
+
+        <svg id="js-plotly-tester" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="
+        position: absolute;
+        left: -10000px;
+        top: -10000px;
+        width: 9000px;
+        height: 9000px;
+        z-index: 1;
+      ">
+            <path class="js-reference-point" d="M0,0H1V1H0Z" style="stroke-width: 0px; fill: black"></path>
+        </svg>
+</body>
+
+</html>
